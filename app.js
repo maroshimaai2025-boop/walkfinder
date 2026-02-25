@@ -8,6 +8,7 @@ const OVERPASS_TIMEOUT = 25000; // Overpass APIタイムアウト（ms）
 const MIN_SEARCH_RADIUS = 300; // 最小検索半径（m）
 const MAX_SEARCH_RADIUS = 10000; // 最大検索半径（m）
 const MAX_SPOTS = 30; // 最大取得件数
+const STEP_TOLERANCE_RATIO = 0.083; // ±約8.3%（例：6000歩 → ±500歩の幅）
 
 // スライダー設定
 const SLIDER_CONFIG = {
@@ -79,8 +80,10 @@ function getTargetKm() {
 
 function getSearchRadius() {
   const km = getTargetKm();
-  const radius = km * 1000;
-  return Math.max(MIN_SEARCH_RADIUS, Math.min(radius, MAX_SEARCH_RADIUS));
+  // 往復距離なので片道は半分。許容範囲の上限まで検索する
+  const oneWayKm = km / 2;
+  const maxOneWayKm = oneWayKm * (1 + STEP_TOLERANCE_RATIO);
+  return Math.max(MIN_SEARCH_RADIUS, Math.min(maxOneWayKm * 1000, MAX_SEARCH_RADIUS));
 }
 
 function calcDistance(lat1, lon1, lat2, lon2) {
@@ -278,16 +281,28 @@ function selectCandidates(elements, userLat, userLon) {
   // 距離でソート
   spots.sort((a, b) => a.distance - b.distance);
 
-  // 最大30件取得
-  const top = spots.slice(0, MAX_SPOTS);
-  if (top.length === 0) return [];
-  if (top.length <= 3) return top;
+  // 目標歩数に対して±STEP_TOLERANCE_RATIO の範囲でフィルタリング
+  const targetKm = getTargetKm(); // 往復目標距離
+  const tolerance = targetKm * STEP_TOLERANCE_RATIO;
+  const minKm = targetKm - tolerance;
+  const maxKm = targetKm + tolerance;
+
+  const inRange = spots.filter((s) => {
+    const roundTripKm = (s.distance / 1000) * 2;
+    return roundTripKm >= minKm && roundTripKm <= maxKm;
+  });
+
+  // 範囲内に候補がなければ、目標に最も近い上位MAX_SPOTS件を使用
+  const pool = inRange.length > 0 ? inRange : spots.slice(0, MAX_SPOTS);
+
+  if (pool.length === 0) return [];
+  if (pool.length <= 3) return pool;
 
   // 3群に分割してそれぞれからランダム1件選出
-  const third = Math.ceil(top.length / 3);
-  const near = top.slice(0, third);
-  const mid = top.slice(third, third * 2);
-  const far = top.slice(third * 2);
+  const third = Math.ceil(pool.length / 3);
+  const near = pool.slice(0, third);
+  const mid = pool.slice(third, third * 2);
+  const far = pool.slice(third * 2);
 
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
   const result = [pick(near)];
