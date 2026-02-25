@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="WalkFinder - 散歩先を自動で提案するWebアプリ。歩数や距離を設定するだけで、周辺のおすすめスポットを見つけます。">
+  <title>WalkFinder - ウォークファインダー</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- ヘッダー -->
+    <header class="header">
+      <h1 class="header__title">WalkFinder</h1>
+      <p class="header__subtitle">散歩先をかんたんに見つけよう</p>
+    </header>
+
+    <!-- 入力セクション -->
+    <main>
+      <section class="input-section">
+        <!-- 単位トグル -->
+        <div class="toggle-group">
+          <button type="button" class="toggle-btn toggle-btn--active" id="toggleSteps" aria-pressed="true">歩数</button>
+          <button type="button" class="toggle-btn" id="toggleDistance" aria-pressed="false">距離（km）</button>
+        </div>
+
+        <!-- スライダー -->
+        <div class="slider-group">
+          <div class="slider-value" id="sliderValue" aria-live="polite">3,000 歩</div>
+          <input
+            type="range"
+            id="slider"
+            class="slider"
+            min="1000"
+            max="15000"
+            step="500"
+            value="3000"
+            aria-label="目標値を設定"
+          >
+          <div class="slider-labels">
+            <span id="sliderMin">1,000</span>
+            <span id="sliderMax">15,000</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 検索ボタン -->
+      <section class="search-section">
+        <button type="button" class="search-btn" id="searchBtn">
+          <span class="search-btn__text">近くの散歩先を探す</span>
+        </button>
+      </section>
+
+      <!-- ステータス表示 -->
+      <section class="status-section" id="statusSection" hidden>
+        <div class="status" id="statusMessage">
+          <div class="spinner" id="spinner" hidden></div>
+          <p class="status__text" id="statusText"></p>
+        </div>
+        <button type="button" class="retry-btn" id="retryBtn" hidden>もう一度試す</button>
+      </section>
+
+      <!-- 候補リスト -->
+      <section class="results-section" id="resultsSection" hidden>
+        <h2 class="results__title">おすすめスポット</h2>
+        <div class="results__list" id="resultsList"></div>
+      </section>
+    </main>
+
+    <!-- フッター -->
+    <footer class="footer">
+      <p class="footer__text">WalkFinder v1.0</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

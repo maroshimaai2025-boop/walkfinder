@@ -1,0 +1,374 @@
+/* ===== Reset & Base ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+  background-color: #f5f3ef;
+  color: #333;
+  line-height: 1.6;
+  min-height: 100dvh;
+}
+
+/* ===== App Container ===== */
+.app-container {
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 0 20px;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== Header ===== */
+.header {
+  text-align: center;
+  padding: 40px 0 24px;
+}
+
+.header__title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2B5C3F;
+  letter-spacing: 0.02em;
+}
+
+.header__subtitle {
+  font-size: 1rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* ===== Main ===== */
+main {
+  flex: 1;
+}
+
+/* ===== Input Section ===== */
+.input-section {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Toggle Group */
+.toggle-group {
+  display: flex;
+  gap: 0;
+  background: #e8e6e2;
+  border-radius: 12px;
+  padding: 4px;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: #888;
+  min-height: 44px;
+}
+
+.toggle-btn--active {
+  background: #fff;
+  color: #2B5C3F;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Slider Group */
+.slider-group {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.slider-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2B5C3F;
+  margin-bottom: 20px;
+}
+
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: #e0ddd8;
+  outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2B5C3F;
+  cursor: pointer;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.slider::-moz-range-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2B5C3F;
+  cursor: pointer;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 0.875rem;
+  color: #999;
+}
+
+/* ===== Search Button ===== */
+.search-section {
+  margin-top: 24px;
+}
+
+.search-btn {
+  width: 100%;
+  padding: 18px 24px;
+  border: none;
+  border-radius: 16px;
+  background: #2B5C3F;
+  color: #fff;
+  font-size: 1.125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 56px;
+  box-shadow: 0 4px 12px rgba(43, 92, 63, 0.3);
+}
+
+.search-btn:hover {
+  background: #234d34;
+  box-shadow: 0 6px 16px rgba(43, 92, 63, 0.4);
+}
+
+.search-btn:active {
+  transform: scale(0.98);
+}
+
+.search-btn:disabled {
+  background: #a0b5a8;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ===== Status Section ===== */
+.status-section {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.status__text {
+  font-size: 1rem;
+  color: #666;
+}
+
+.status__text--error {
+  color: #c0392b;
+}
+
+/* Spinner */
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #e0ddd8;
+  border-top-color: #2B5C3F;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Retry Button */
+.retry-btn {
+  margin-top: 16px;
+  padding: 12px 32px;
+  border: 2px solid #2B5C3F;
+  border-radius: 12px;
+  background: #fff;
+  color: #2B5C3F;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 44px;
+}
+
+.retry-btn:hover {
+  background: #2B5C3F;
+  color: #fff;
+}
+
+/* ===== Results Section ===== */
+.results-section {
+  margin-top: 32px;
+  padding-bottom: 32px;
+}
+
+.results__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.results__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Spot Card */
+.spot-card {
+  display: block;
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.spot-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.spot-card:active {
+  transform: translateY(0);
+}
+
+.spot-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.spot-card__name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #2B5C3F;
+  flex: 1;
+}
+
+.spot-card__category {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #fff;
+  background: #2B5C3F;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.spot-card__details {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.spot-card__detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.spot-card__detail-label {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+.spot-card__detail-value {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.spot-card__nav-hint {
+  margin-top: 14px;
+  font-size: 0.8125rem;
+  color: #2B5C3F;
+  text-align: right;
+  font-weight: 600;
+}
+
+/* Distance badge */
+.spot-card__distance-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.spot-card__distance-badge--near {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.spot-card__distance-badge--mid {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.spot-card__distance-badge--far {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+/* ===== Footer ===== */
+.footer {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.footer__text {
+  font-size: 0.8125rem;
+  color: #bbb;
+}
+
+/* ===== Utility ===== */
+[hidden] {
+  display: none !important;
+}
