@@ -1,8 +1,12 @@
 // ===== 定数 =====
 const STEP_LENGTH_M = 0.65; // 歩幅（m）
 const WALK_SPEED_KMH = 4.0; // 歩行速度（km/h）
-const OVERPASS_MAIN = 'https://overpass-api.de/api/interpreter';
-const OVERPASS_FALLBACK = 'https://overpass.kumi.systems/api/interpreter';
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.openstreetmap.ru/api/interpreter',
+  'https://z.overpass-api.de/api/interpreter',
+];
 const GEO_TIMEOUT = 10000; // 位置取得タイムアウト（ms）
 const OVERPASS_TIMEOUT = 25000; // Overpass APIタイムアウト（ms）
 const MIN_SEARCH_RADIUS = 300; // 最小検索半径（m）
@@ -229,22 +233,16 @@ async function searchSpots(lat, lon) {
   const radius = getSearchRadius();
   const query = buildOverpassQuery(lat, lon, radius);
 
-  const controller1 = new AbortController();
-  const controller2 = new AbortController();
-  const timeoutId = setTimeout(() => {
-    controller1.abort();
-    controller2.abort();
-  }, OVERPASS_TIMEOUT);
+  const controllers = OVERPASS_ENDPOINTS.map(() => new AbortController());
+  const timeoutId = setTimeout(() => controllers.forEach((c) => c.abort()), OVERPASS_TIMEOUT);
 
   try {
-    // 両エンドポイントに同時リクエスト、先に成功した方を使用
-    const data = await Promise.any([
-      fetchOverpass(OVERPASS_MAIN, query, controller1.signal),
-      fetchOverpass(OVERPASS_FALLBACK, query, controller2.signal),
-    ]);
+    // 全エンドポイントに同時リクエスト、最初に成功した方を使用
+    const data = await Promise.any(
+      OVERPASS_ENDPOINTS.map((ep, i) => fetchOverpass(ep, query, controllers[i].signal))
+    );
     clearTimeout(timeoutId);
-    controller1.abort();
-    controller2.abort();
+    controllers.forEach((c) => c.abort());
     return data;
   } catch (err) {
     clearTimeout(timeoutId);
