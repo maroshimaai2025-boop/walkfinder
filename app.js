@@ -229,26 +229,26 @@ async function searchSpots(lat, lon) {
   const radius = getSearchRadius();
   const query = buildOverpassQuery(lat, lon, radius);
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT);
+  const controller1 = new AbortController();
+  const controller2 = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller1.abort();
+    controller2.abort();
+  }, OVERPASS_TIMEOUT);
 
   try {
-    const data = await fetchOverpass(OVERPASS_MAIN, query, controller.signal);
+    // 両エンドポイントに同時リクエスト、先に成功した方を使用
+    const data = await Promise.any([
+      fetchOverpass(OVERPASS_MAIN, query, controller1.signal),
+      fetchOverpass(OVERPASS_FALLBACK, query, controller2.signal),
+    ]);
     clearTimeout(timeoutId);
+    controller1.abort();
+    controller2.abort();
     return data;
   } catch (err) {
     clearTimeout(timeoutId);
-    // フォールバック（HTTPエラー or タイムアウト）
-    const controller2 = new AbortController();
-    const timeoutId2 = setTimeout(() => controller2.abort(), OVERPASS_TIMEOUT);
-    try {
-      const data = await fetchOverpass(OVERPASS_FALLBACK, query, controller2.signal);
-      clearTimeout(timeoutId2);
-      return data;
-    } catch (err2) {
-      clearTimeout(timeoutId2);
-      throw err2;
-    }
+    throw err;
   }
 }
 
