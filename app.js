@@ -320,9 +320,8 @@ function renderResults(candidates, userLat, userLon) {
 
   candidates.forEach((spot, i) => {
     const distKm = spot.distance / 1000;
-    const roundTripKm = distKm * 2;
-    const roundTripSteps = Math.round(kmToSteps(roundTripKm));
-    const timeMin = Math.round((roundTripKm / WALK_SPEED_KMH) * 60);
+    const steps = Math.round(kmToSteps(distKm));
+    const timeMin = Math.round((distKm / WALK_SPEED_KMH) * 60);
 
     const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lon}&travelmode=walking`;
 
@@ -340,16 +339,12 @@ function renderResults(candidates, userLat, userLon) {
       </div>
       <div class="spot-card__details">
         <div class="spot-card__detail">
-          <span class="spot-card__detail-label">片道</span>
+          <span class="spot-card__detail-label">距離</span>
           <span class="spot-card__detail-value">${distKm < 1 ? Math.round(distKm * 1000) + ' m' : distKm.toFixed(1) + ' km'}</span>
         </div>
         <div class="spot-card__detail">
-          <span class="spot-card__detail-label">往復距離</span>
-          <span class="spot-card__detail-value">${roundTripKm.toFixed(1)} km</span>
-        </div>
-        <div class="spot-card__detail">
-          <span class="spot-card__detail-label">予測歩数（往復）</span>
-          <span class="spot-card__detail-value">${formatNumber(roundTripSteps)} 歩</span>
+          <span class="spot-card__detail-label">予測歩数</span>
+          <span class="spot-card__detail-value">${formatNumber(steps)} 歩</span>
         </div>
         <div class="spot-card__detail">
           <span class="spot-card__detail-label">予測所要時間</span>
