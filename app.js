@@ -80,10 +80,9 @@ function getTargetKm() {
 
 function getSearchRadius() {
   const km = getTargetKm();
-  // 往復距離なので片道は半分。許容範囲の上限まで検索する
-  const oneWayKm = km / 2;
-  const maxOneWayKm = oneWayKm * (1 + STEP_TOLERANCE_RATIO);
-  return Math.max(MIN_SEARCH_RADIUS, Math.min(maxOneWayKm * 1000, MAX_SEARCH_RADIUS));
+  // 片道目標距離の上限まで検索する
+  const maxKm = km * (1 + STEP_TOLERANCE_RATIO);
+  return Math.max(MIN_SEARCH_RADIUS, Math.min(maxKm * 1000, MAX_SEARCH_RADIUS));
 }
 
 function calcDistance(lat1, lon1, lat2, lon2) {
@@ -281,15 +280,15 @@ function selectCandidates(elements, userLat, userLon) {
   // 距離でソート
   spots.sort((a, b) => a.distance - b.distance);
 
-  // 目標歩数に対して±STEP_TOLERANCE_RATIO の範囲でフィルタリング
-  const targetKm = getTargetKm(); // 往復目標距離
+  // 片道目標距離に対して±STEP_TOLERANCE_RATIO の範囲でフィルタリング
+  const targetKm = getTargetKm(); // 片道目標距離
   const tolerance = targetKm * STEP_TOLERANCE_RATIO;
   const minKm = targetKm - tolerance;
   const maxKm = targetKm + tolerance;
 
   const inRange = spots.filter((s) => {
-    const roundTripKm = (s.distance / 1000) * 2;
-    return roundTripKm >= minKm && roundTripKm <= maxKm;
+    const oneWayKm = s.distance / 1000;
+    return oneWayKm >= minKm && oneWayKm <= maxKm;
   });
 
   // 範囲内に候補がなければ、目標に最も近い上位MAX_SPOTS件を使用
