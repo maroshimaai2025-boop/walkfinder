@@ -1,13 +1,18 @@
 // ===== 定数 =====
 const STEP_LENGTH_M = 0.65; // 歩幅（m）
 const WALK_SPEED_KMH = 4.0; // 歩行速度（km/h）
-const OVERPASS_MAIN = 'https://overpass-api.de/api/interpreter';
-const OVERPASS_FALLBACK = 'https://overpass.kumi.systems/api/interpreter';
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.openstreetmap.ru/api/interpreter',
+  'https://z.overpass-api.de/api/interpreter',
+];
 const GEO_TIMEOUT = 10000; // 位置取得タイムアウト（ms）
 const OVERPASS_TIMEOUT = 25000; // Overpass APIタイムアウト（ms）
 const MIN_SEARCH_RADIUS = 300; // 最小検索半径（m）
 const MAX_SEARCH_RADIUS = 10000; // 最大検索半径（m）
 const MAX_SPOTS = 30; // 最大取得件数
+const STEP_TOLERANCE_RATIO = 0.083; // ±約8.3%（例：6000歩 → ±500歩の幅）
 
 // スライダー設定
 const SLIDER_CONFIG = {
@@ -79,8 +84,9 @@ function getTargetKm() {
 
 function getSearchRadius() {
   const km = getTargetKm();
-  const radius = km * 1000;
-  return Math.max(MIN_SEARCH_RADIUS, Math.min(radius, MAX_SEARCH_RADIUS));
+  // 片道目標距離の上限まで検索する
+  const maxKm = km * (1 + STEP_TOLERANCE_RATIO);
+  return Math.max(MIN_SEARCH_RADIUS, Math.min(maxKm * 1000, MAX_SEARCH_RADIUS));
 }
 
 function calcDistance(lat1, lon1, lat2, lon2) {
@@ -227,26 +233,20 @@ async function searchSpots(lat, lon) {
   const radius = getSearchRadius();
   const query = buildOverpassQuery(lat, lon, radius);
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT);
+  const controllers = OVERPASS_ENDPOINTS.map(() => new AbortController());
+  const timeoutId = setTimeout(() => controllers.forEach((c) => c.abort()), OVERPASS_TIMEOUT);
 
   try {
-    const data = await fetchOverpass(OVERPASS_MAIN, query, controller.signal);
+    // 全エンドポイントに同時リクエスト、最初に成功した方を使用
+    const data = await Promise.any(
+      OVERPASS_ENDPOINTS.map((ep, i) => fetchOverpass(ep, query, controllers[i].signal))
+    );
     clearTimeout(timeoutId);
+    controllers.forEach((c) => c.abort());
     return data;
   } catch (err) {
     clearTimeout(timeoutId);
-    // フォールバック（HTTPエラー or タイムアウト）
-    const controller2 = new AbortController();
-    const timeoutId2 = setTimeout(() => controller2.abort(), OVERPASS_TIMEOUT);
-    try {
-      const data = await fetchOverpass(OVERPASS_FALLBACK, query, controller2.signal);
-      clearTimeout(timeoutId2);
-      return data;
-    } catch (err2) {
-      clearTimeout(timeoutId2);
-      throw err2;
-    }
+    throw err;
   }
 }
 
@@ -278,16 +278,28 @@ function selectCandidates(elements, userLat, userLon) {
   // 距離でソート
   spots.sort((a, b) => a.distance - b.distance);
 
-  // 最大30件取得
-  const top = spots.slice(0, MAX_SPOTS);
-  if (top.length === 0) return [];
-  if (top.length <= 3) return top;
+  // 片道目標距離に対して±STEP_TOLERANCE_RATIO の範囲でフィルタリング
+  const targetKm = getTargetKm(); // 片道目標距離
+  const tolerance = targetKm * STEP_TOLERANCE_RATIO;
+  const minKm = targetKm - tolerance;
+  const maxKm = targetKm + tolerance;
+
+  const inRange = spots.filter((s) => {
+    const oneWayKm = s.distance / 1000;
+    return oneWayKm >= minKm && oneWayKm <= maxKm;
+  });
+
+  // 範囲内に候補がなければ、目標に最も近い上位MAX_SPOTS件を使用
+  const pool = inRange.length > 0 ? inRange : spots.slice(0, MAX_SPOTS);
+
+  if (pool.length === 0) return [];
+  if (pool.length <= 3) return pool;
 
   // 3群に分割してそれぞれからランダム1件選出
-  const third = Math.ceil(top.length / 3);
-  const near = top.slice(0, third);
-  const mid = top.slice(third, third * 2);
-  const far = top.slice(third * 2);
+  const third = Math.ceil(pool.length / 3);
+  const near = pool.slice(0, third);
+  const mid = pool.slice(third, third * 2);
+  const far = pool.slice(third * 2);
 
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
   const result = [pick(near)];
@@ -306,9 +318,8 @@ function renderResults(candidates, userLat, userLon) {
 
   candidates.forEach((spot, i) => {
     const distKm = spot.distance / 1000;
-    const roundTripKm = distKm * 2;
-    const roundTripSteps = Math.round(kmToSteps(roundTripKm));
-    const timeMin = Math.round((roundTripKm / WALK_SPEED_KMH) * 60);
+    const steps = Math.round(kmToSteps(distKm));
+    const timeMin = Math.round((distKm / WALK_SPEED_KMH) * 60);
 
     const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lon}&travelmode=walking`;
 
@@ -326,16 +337,12 @@ function renderResults(candidates, userLat, userLon) {
       </div>
       <div class="spot-card__details">
         <div class="spot-card__detail">
-          <span class="spot-card__detail-label">片道</span>
+          <span class="spot-card__detail-label">距離</span>
           <span class="spot-card__detail-value">${distKm < 1 ? Math.round(distKm * 1000) + ' m' : distKm.toFixed(1) + ' km'}</span>
         </div>
         <div class="spot-card__detail">
-          <span class="spot-card__detail-label">往復距離</span>
-          <span class="spot-card__detail-value">${roundTripKm.toFixed(1)} km</span>
-        </div>
-        <div class="spot-card__detail">
-          <span class="spot-card__detail-label">予測歩数（往復）</span>
-          <span class="spot-card__detail-value">${formatNumber(roundTripSteps)} 歩</span>
+          <span class="spot-card__detail-label">予測歩数</span>
+          <span class="spot-card__detail-value">${formatNumber(steps)} 歩</span>
         </div>
         <div class="spot-card__detail">
           <span class="spot-card__detail-label">予測所要時間</span>
