@@ -368,6 +368,36 @@ main {
   color: #bbb;
 }
 
+/* ===== Splash Screen ===== */
+.splash {
+  position: fixed;
+  inset: 0;
+  background: #f5f3ef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: opacity 0.5s ease;
+}
+
+.splash__text {
+  font-size: clamp(1.5rem, 7vw, 2.5rem);
+  font-weight: 700;
+  color: #2B5C3F;
+  letter-spacing: 0.1em;
+  text-align: center;
+  transition: opacity 0.8s ease;
+}
+
+.splash--text-hidden .splash__text {
+  opacity: 0;
+}
+
+.splash--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* ===== Utility ===== */
 [hidden] {
   display: none !important;

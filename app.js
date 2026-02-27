@@ -432,3 +432,17 @@ $retryBtn.addEventListener('click', handleSearch);
 
 // 初期表示
 updateSliderDisplay();
+
+// ===== スプラッシュスクリーン =====
+(function () {
+  const splash = document.getElementById('splash');
+  if (!splash) return;
+  // 1s 表示 → テキストを 0.8s でフェードアウト → スクリーン全体を 0.5s でフェードアウト
+  setTimeout(() => {
+    splash.classList.add('splash--text-hidden');
+    setTimeout(() => {
+      splash.classList.add('splash--hidden');
+      setTimeout(() => splash.remove(), 500);
+    }, 800);
+  }, 1000);
+})();
