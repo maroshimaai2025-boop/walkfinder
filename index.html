@@ -23,6 +23,18 @@
     <!-- 入力セクション -->
     <main>
       <section class="input-section">
+        <!-- 出発地選択 -->
+        <div class="location-mode-section">
+          <span class="location-mode-label">出発地</span>
+          <div class="location-mode-group" role="group" aria-label="出発地を選択">
+            <button type="button" class="location-mode-btn location-mode-btn--active" id="modeCurrentLocation" aria-pressed="true">現在地から</button>
+            <button type="button" class="location-mode-btn" id="modeStation" aria-pressed="false">駅から</button>
+          </div>
+          <div class="station-input-group" id="stationInputGroup" hidden>
+            <input type="text" id="stationInput" class="station-input" placeholder="例：渋谷駅、新宿、品川" aria-label="駅名を入力">
+          </div>
+        </div>
+
         <!-- 単位トグル -->
         <div class="toggle-group">
           <button type="button" class="toggle-btn toggle-btn--active" id="toggleSteps" aria-pressed="true">歩数</button>

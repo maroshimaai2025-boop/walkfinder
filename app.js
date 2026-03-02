@@ -63,6 +63,7 @@ const $resultsList = document.getElementById('resultsList');
 
 // ===== アプリ状態 =====
 let currentUnit = 'steps'; // 'steps' | 'distance'
+let currentSearchMode = 'location'; // 'location' | 'station'
 
 // ===== ユーティリティ関数 =====
 function stepsToKm(steps) {
@@ -185,6 +186,41 @@ function hideStatus() {
 
 function setLoading(loading) {
   $searchBtn.disabled = loading;
+}
+
+// ===== 検索モード切替 =====
+function switchSearchMode(mode) {
+  currentSearchMode = mode;
+  const $modeLocation = document.getElementById('modeCurrentLocation');
+  const $modeStation = document.getElementById('modeStation');
+  const $stationGroup = document.getElementById('stationInputGroup');
+
+  if (mode === 'location') {
+    $modeLocation.classList.add('location-mode-btn--active');
+    $modeLocation.setAttribute('aria-pressed', 'true');
+    $modeStation.classList.remove('location-mode-btn--active');
+    $modeStation.setAttribute('aria-pressed', 'false');
+    $stationGroup.hidden = true;
+  } else {
+    $modeStation.classList.add('location-mode-btn--active');
+    $modeStation.setAttribute('aria-pressed', 'true');
+    $modeLocation.classList.remove('location-mode-btn--active');
+    $modeLocation.setAttribute('aria-pressed', 'false');
+    $stationGroup.hidden = false;
+  }
+}
+
+// ===== 駅名ジオコーディング（Nominatim） =====
+async function geocodeStation(stationName) {
+  const query = stationName.includes('駅') ? stationName : stationName + '駅';
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=jp&format=json&limit=1`;
+  const res = await fetch(url, {
+    headers: { 'Accept-Language': 'ja', 'User-Agent': 'WalkFinder/1.0' },
+  });
+  if (!res.ok) throw new Error('GEOCODE_FAIL');
+  const data = await res.json();
+  if (!data.length) throw new Error('NOT_FOUND');
+  return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
 }
 
 // ===== 位置情報取得 =====
@@ -371,24 +407,49 @@ async function handleSearch() {
   setLoading(true);
 
   try {
-    // 1. 現在地取得
-    showStatus('現在地を取得しています...');
-    let position;
-    try {
-      position = await getCurrentPosition();
-    } catch (geoErr) {
-      if (geoErr.message === 'UNSUPPORTED') {
-        showStatus('このブラウザは位置情報に対応していません。Safari または Chrome をお使いください。', true);
-      } else if (geoErr.code === 1) {
-        showStatus('位置情報の許可が必要です。ブラウザの設定をご確認ください。', true);
-      } else {
-        showStatus('現在地の取得に失敗しました。もう一度お試しください。', true);
-      }
-      setLoading(false);
-      return;
-    }
+    // 1. 座標取得（現在地 or 駅名）
+    let lat, lon;
 
-    const { latitude: lat, longitude: lon } = position.coords;
+    if (currentSearchMode === 'location') {
+      showStatus('現在地を取得しています...');
+      let position;
+      try {
+        position = await getCurrentPosition();
+      } catch (geoErr) {
+        if (geoErr.message === 'UNSUPPORTED') {
+          showStatus('このブラウザは位置情報に対応していません。Safari または Chrome をお使いください。', true);
+        } else if (geoErr.code === 1) {
+          showStatus('位置情報の許可が必要です。ブラウザの設定をご確認ください。', true);
+        } else {
+          showStatus('現在地の取得に失敗しました。もう一度お試しください。', true);
+        }
+        setLoading(false);
+        return;
+      }
+      lat = position.coords.latitude;
+      lon = position.coords.longitude;
+    } else {
+      const stationName = document.getElementById('stationInput').value.trim();
+      if (!stationName) {
+        showStatus('駅名を入力してください。', true);
+        setLoading(false);
+        return;
+      }
+      showStatus(`「${stationName}」の位置を取得しています...`);
+      try {
+        const result = await geocodeStation(stationName);
+        lat = result.lat;
+        lon = result.lon;
+      } catch (geoErr) {
+        if (geoErr.message === 'NOT_FOUND') {
+          showStatus('駅が見つかりませんでした。別の駅名でお試しください。', true);
+        } else {
+          showStatus('駅の検索に失敗しました。もう一度お試しください。', true);
+        }
+        setLoading(false);
+        return;
+      }
+    }
 
     // 2. スポット検索
     showStatus('周辺のスポットを検索しています...');
@@ -429,6 +490,8 @@ $toggleDistance.addEventListener('click', () => switchUnit('distance'));
 $slider.addEventListener('input', updateSliderDisplay);
 $searchBtn.addEventListener('click', handleSearch);
 $retryBtn.addEventListener('click', handleSearch);
+document.getElementById('modeCurrentLocation').addEventListener('click', () => switchSearchMode('location'));
+document.getElementById('modeStation').addEventListener('click', () => switchSearchMode('station'));
 
 // 初期表示
 updateSliderDisplay();
